@@ -8,10 +8,7 @@ export const Home = () => {
     const { store } = useContext(Context);
     const navigate = useNavigate();
 
-    if (store.auth) {
-        navigate("/demo");
-        return null; 
-    }
+  
 
     return (
         <div className="text-center mt-5">

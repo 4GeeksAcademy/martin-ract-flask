@@ -15,10 +15,11 @@ const Form = () => {
 
         const result = await actions.login(email, password);
 
-        if (result.error) {
-            setError(result.error);
+        if (result.success) {
+            alert("Successfully Logged in");
+            navigate("/private");
         } else {
-            alert("Succesfully Loged in");
+            setError(result.error || "Login failed");
         }
     }
 
@@ -37,7 +38,9 @@ const Form = () => {
                             onChange={(e) => setEmail(e.target.value)} 
                             required 
                         />
-                        <div id="emailHelp" className="form-text text-center">We'll never share your email with anyone else.</div>
+                        <div id="emailHelp" className="form-text text-center">
+                            We'll never share your email with anyone else.
+                        </div>
                     </div>
                     <div className="mb-3">
                         <label htmlFor="exampleInputPassword1" className="form-label">Password</label>
@@ -61,7 +64,9 @@ const Form = () => {
             </div>
         </div>
     );
-}
+};
 
 export default Form;
+
+
 

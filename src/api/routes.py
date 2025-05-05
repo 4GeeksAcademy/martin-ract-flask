@@ -25,30 +25,54 @@ def handle_hello():
     return jsonify(response_body), 200
 @api.route("/login", methods=["POST"])
 def login():
-    email = request.json.get("email", None)
-    password = request.json.get("password", None)
-    user =User.query.filter_by(email=email).first()
-    if user == None:
-        return jsonify({"msg": "bad email or password"}),401
-    if email != user.email or password != user.password:
-        return jsonify({"msg": "Bad username or password"}), 401
-    
+    body = request.get_json()
+    email = body.get("email")
+    password = body.get("password")
 
-    access_token = create_access_token(identity=email)
-    return jsonify(access_token=access_token)
+    if not email or not password:
+        return jsonify({"msg": "Email and password are required"}), 400
+
+    user = User.query.filter_by(email=email).first()
+    if not user or user.password != password:
+        return jsonify({"msg": "Bad email or password"}), 401
+
+    access_token = create_access_token(identity=str(user.id))
+    return jsonify(access_token=access_token), 200
+
+@api.route("/protected", methods=["GET"])
+@jwt_required()
+def protected():
+    current_user_id = int(get_jwt_identity())
+    
+    user = User.query.get(current_user_id)
+    print("Current user:", user)
+
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    return jsonify({
+        "logged_in_as": user.email,
+        "user_id": user.id
+    }), 200
 @api.route("/signup", methods=["POST"])
 def signup():
     body = request.get_json()
-    user =User.query.filter_by(email=body["email"], password=body["password"]).first()
-    if user != None:
-        return jsonify ({"msg: User alredy exist" }),401
-    user = User(email=body["email"], password=body["password"], is_active =True)
-    db.session.add(user)
+    email = body.get("email")
+    password = body.get("password")
+
+    if not email or not password:
+        return jsonify({"msg": "Email and password are required"}), 400
+
+    user = User.query.filter_by(email=email).first()
+    if user:
+        return jsonify({"msg": "User already exists"}), 409
+
+    new_user = User(email=email, password=password, is_active=True)
+    db.session.add(new_user)
     db.session.commit()
-    response_body= {
-            "msg": "User Created"
-        }
-    return jsonify(response_body), 200
+
+    return jsonify({"msg": "User created"}), 201
+
     
         
 

@@ -32,26 +32,26 @@ const getState = ({ getStore, getActions, setStore }) => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 };
-
+            
                 try {
                     const response = await fetch(process.env.BACKEND_URL + '/api/login', requestOptions);
                     const data = await response.json();
-
+            
                     if (response.status === 200 && data.access_token) {
                         localStorage.setItem("token", data.access_token);
                         setStore({ auth: true });
+                        return { success: true }; 
                     } else {
                         localStorage.removeItem("token");
                         setStore({ auth: false });
-                        throw new Error(data.msg || "Bad username or password");
+                        return { error: data.msg || "Bad username or password" }; 
                     }
-
-                    return data;
                 } catch (error) {
-                    console.error("Bad username or password:", error);
+                    console.error("Login error:", error);
                     return { error: error.message };
                 }
             },
+            
 			signup: async (email, password) => {
 				const backendURL = process.env.BACKEND_URL;
 				
@@ -103,7 +103,39 @@ const getState = ({ getStore, getActions, setStore }) => {
                 });
 
                 setStore({ demo });
+            },
+            getProtectedView: async () => {
+                const token = localStorage.getItem("token"); 
+                if (!token) {
+                    console.error("No token found");
+                    return null;
+                }
+            
+                try {
+                    const resp = await fetch(process.env.BACKEND_URL + "/api/protected", {
+                        method: "GET",
+                        headers: {
+                            "Authorization": "Bearer " + token
+                        }
+                    });
+            
+                    if (!resp.ok) {
+                        console.error("Failed to fetch protected view");
+                        return null;
+                    }
+            
+                    const data = await resp.json();
+                    console.log("Protected view data:", data);
+            
+                    setStore({ protectedInfo: data });
+            
+                    return data;
+                } catch (error) {
+                    console.error("Error fetching protected view", error);
+                    return null;
+                }
             }
+            
         }
     };
 };
